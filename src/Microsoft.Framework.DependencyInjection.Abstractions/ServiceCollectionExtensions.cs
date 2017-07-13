@@ -1,9 +1,10 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Framework.DependencyInjection.Abstractions;
 using Microsoft.Framework.Internal;
 
 namespace Microsoft.Framework.DependencyInjection
@@ -74,6 +75,161 @@ namespace Microsoft.Framework.DependencyInjection
             }
 
             return anyAdded;
+        }
+
+        public static bool TryAddTransient(
+            [NotNull] this IServiceCollection collection,
+            [NotNull] Type service)
+        {
+            var descriptor = ServiceDescriptor.Transient(service, service);
+            return TryAdd(collection, descriptor);
+        }
+
+        public static bool TryAddTransient(
+            [NotNull] this IServiceCollection collection,
+            [NotNull] Type service,
+            [NotNull] Type implementationType)
+        {
+            var descriptor = ServiceDescriptor.Transient(service, implementationType);
+            return TryAdd(collection, descriptor);
+        }
+
+        public static bool TryAddTransient(
+            [NotNull] this IServiceCollection collection,
+            [NotNull] Type service,
+            [NotNull] Func<IServiceProvider, object> implementationFactory)
+        {
+            var descriptor = ServiceDescriptor.Transient(service, implementationFactory);
+            return TryAdd(collection, descriptor);
+        }
+
+        public static bool TryAddTransient<TService>([NotNull] this IServiceCollection collection)
+        {
+            return TryAddTransient(collection, typeof(TService), typeof(TService));
+        }
+
+        public static bool TryAddTransient<TService, TImplementation>([NotNull] this IServiceCollection collection)
+        {
+            return TryAddTransient(collection, typeof(TService), typeof(TImplementation));
+        }
+
+        public static bool TryAddScoped(
+            [NotNull] this IServiceCollection collection,
+            [NotNull] Type service)
+        {
+            var descriptor = ServiceDescriptor.Scoped(service, service);
+            return TryAdd(collection, descriptor);
+        }
+
+        public static bool TryAddScoped(
+            [NotNull] this IServiceCollection collection,
+            [NotNull] Type service,
+            [NotNull] Type implementationType)
+        {
+            var descriptor = ServiceDescriptor.Scoped(service, implementationType);
+            return TryAdd(collection, descriptor);
+        }
+
+        public static bool TryAddScoped(
+            [NotNull] this IServiceCollection collection,
+            [NotNull] Type service,
+            [NotNull] Func<IServiceProvider, object> implementationFactory)
+        {
+            var descriptor = ServiceDescriptor.Scoped(service, implementationFactory);
+            return TryAdd(collection, descriptor);
+        }
+
+        public static bool TryAddScoped<TService>([NotNull] this IServiceCollection collection)
+        {
+            return TryAddScoped(collection, typeof(TService), typeof(TService));
+        }
+
+        public static bool TryAddScoped<TService, TImplementation>([NotNull] this IServiceCollection collection)
+        {
+            return TryAddScoped(collection, typeof(TService), typeof(TImplementation));
+        }
+
+        public static bool TryAddSingleton(
+            [NotNull] this IServiceCollection collection,
+            [NotNull] Type service)
+        {
+            var descriptor = ServiceDescriptor.Singleton(service, service);
+            return TryAdd(collection, descriptor);
+        }
+
+        public static bool TryAddSingleton(
+            [NotNull] this IServiceCollection collection,
+            [NotNull] Type service,
+            [NotNull] Type implementationType)
+        {
+            var descriptor = ServiceDescriptor.Singleton(service, implementationType);
+            return TryAdd(collection, descriptor);
+        }
+
+        public static bool TryAddSingleton(
+            [NotNull] this IServiceCollection collection,
+            [NotNull] Type service,
+            [NotNull] Func<IServiceProvider, object> implementationFactory)
+        {
+            var descriptor = ServiceDescriptor.Singleton(service, implementationFactory);
+            return TryAdd(collection, descriptor);
+        }
+
+        public static bool TryAddSingleton<TService>([NotNull] this IServiceCollection collection)
+        {
+            return TryAddSingleton(collection, typeof(TService), typeof(TService));
+        }
+
+        public static bool TryAddSingleton<TService, TImplementation>([NotNull] this IServiceCollection collection)
+        {
+            return TryAddSingleton(collection, typeof(TService), typeof(TImplementation));
+        }
+
+        /// <summary>
+        /// Adds a <see cref="ServiceDescriptor"/> if an existing descriptor with the same
+        /// <see cref="ServiceDescriptor.ServiceType"/> and <see cref="ServiceDescriptor.ImplementationType"/> does
+        /// not already exist in <paramref name="services."/>.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+        /// <param name="descriptor">
+        /// A <see cref="ServiceDescriptor"/> with <see cref="ServiceDescriptor.ImplementationType"/> set to a
+        /// non-<c>null</c> value.
+        /// </param>
+        /// <returns>
+        /// <c>true</c> if <paramref name="descriptor"/> is added to the collection, otherwise <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// Use <see cref="TryAddEnumerable"/> when registing a service implementation of a service type that
+        /// supports multiple registrations of the same service type. Using
+        /// <see cref="Add(IServiceCollection, ServiceDescriptor)"/> is not idempotent and can add duplicate
+        /// <see cref="ServiceDescriptor"/> instances if called twice. Using
+        /// <see cref="TryAddEnumerable(IServiceCollection, ServiceDescriptor)"/> will prevent registration
+        /// of multiple implementation types.
+        /// </remarks>
+        public static bool TryAddEnumerable(
+            [NotNull] this IServiceCollection services,
+            [NotNull] ServiceDescriptor descriptor)
+        {
+            // This can't work when registering a factory or instance, you have to register a type.
+            // Additionally, if any existing registrations use a factory or instance, we can't check those, but we don't
+            // throw for those, because it might be added by user code and is totally valid.
+            if (descriptor.ImplementationType == null)
+            {
+                var message = Resources.FormatTryAddEnumerable_ImplementationTypeMustBeSet(
+                    nameof(ServiceDescriptor),
+                    nameof(ServiceDescriptor.ImplementationType));
+                throw new ArgumentException(message, nameof(descriptor));
+            }
+
+            if (services.Any(d =>
+                d.ServiceType == descriptor.ServiceType &&
+                d.ImplementationType == descriptor.ImplementationType))
+            {
+                return false;
+            }
+
+            services.Add(descriptor);
+            return true;
         }
 
         public static IServiceCollection AddTransient([NotNull] this IServiceCollection collection,

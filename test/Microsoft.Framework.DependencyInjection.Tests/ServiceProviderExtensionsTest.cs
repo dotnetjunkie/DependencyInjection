@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -18,6 +18,21 @@ namespace Microsoft.Framework.DependencyInjection
 
             // Act
             var services = serviceProvider.GetRequiredServices<IFoo>();
+
+            // Assert
+            Assert.Contains(services, item => item is Foo1);
+            Assert.Contains(services, item => item is Foo2);
+            Assert.Equal(2, services.Count());
+        }
+        
+        [Fact]
+        public void NonGeneric_GetRequiredServices_ReturnsAllServices()
+        {
+            // Arrange
+            var serviceProvider = CreateFooServiceProvider(2);
+
+            // Act
+            var services = serviceProvider.GetRequiredServices(typeof(IFoo));
 
             // Assert
             Assert.Contains(services, item => item is Foo1);

@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -70,6 +70,19 @@ namespace Microsoft.Framework.DependencyInjection
             }
 
             return providers;
+        }
+
+        /// <summary>
+        /// Get an enumeration of services of type <paramref name="serviceType"/> from the IServiceProvider.
+        /// </summary>
+        /// <param name="provider">The <see cref="IServiceProvider"/> to retrieve the services from.</param>
+        /// <param name="serviceType">An object that specifies the type of service object to get.</param>
+        /// <returns>An enumeration of services of type <paramref name="serviceType"/>.</returns>
+        /// <exception cref="System.InvalidOperationException">There is no service of type <paramref name="serviceType"/>.</exception>
+        public static IEnumerable<object> GetRequiredServices([NotNull] this IServiceProvider provider, [NotNull] Type serviceType)
+        {
+            var genericEnumerable = typeof(IEnumerable<>).MakeGenericType(new [] { serviceType });
+            return (IEnumerable<object>)provider.GetRequiredService(genericEnumerable);
         }
     }
 }
