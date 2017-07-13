@@ -25,3 +25,10 @@ nuget.exe
 *.ipch
 *.sln.ide
 project.lock.json
+.vs
+.build/
+.testPublish/
+BenchmarkDotNet.Artifacts/
+BDN.Generated/
+binaries/
+global.json
